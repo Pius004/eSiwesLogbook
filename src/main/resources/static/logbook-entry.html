@@ -1,0 +1,523 @@
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <title>Logbook Entry</title>-->
+<!--    <script src="https://cdn.tailwindcss.com"></script>-->
+<!--    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>-->
+<!--</head>-->
+<!--<body class="bg-gray-100 p-8">-->
+<!--<div class="container mx-auto max-w-2xl">-->
+<!--    <h1 class="text-3xl font-bold text-center mb-6">Weekly Logbook Entry</h1>-->
+
+<!--    <div id="logbook-entries" class="space-y-4"></div>-->
+
+<!--    <div class="flex justify-between mt-4">-->
+<!--        <button id="add-entry-btn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">-->
+<!--            Add Entry-->
+<!--        </button>-->
+<!--        <button id="submit-btn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 hidden">-->
+<!--            Submit Logbook-->
+<!--        </button>-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; Compiled Entries Section &ndash;&gt;-->
+<!--    <div id="compiled-entries" class="mt-8 bg-white p-4 rounded shadow hidden">-->
+<!--        <h2 class="text-xl font-bold mb-4">Compiled Weekly Entries</h2>-->
+<!--        <div id="compiled-content"></div>-->
+<!--        <button id="print-btn" class="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700">-->
+<!--            Print PDF-->
+<!--        </button>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<script>-->
+<!--    const { jsPDF } = window.jspdf;-->
+<!--    const entriesContainer = document.getElementById('logbook-entries');-->
+<!--    const addEntryBtn = document.getElementById('add-entry-btn');-->
+<!--    const submitBtn = document.getElementById('submit-btn');-->
+<!--    const compiledEntries = document.getElementById('compiled-entries');-->
+<!--    const compiledContent = document.getElementById('compiled-content');-->
+<!--    const printBtn = document.getElementById('print-btn');-->
+
+<!--    let entryCount = 0;-->
+<!--    const minEntries = 3;-->
+<!--    const maxEntries = 6;-->
+
+<!--    function createEntryTemplate(index) {-->
+<!--        return `-->
+<!--        <div class="bg-white shadow-md rounded p-4" id="entry-${index}">-->
+<!--            <button class="w-full text-left text-lg font-bold" onclick="toggleCollapse(${index})">-->
+<!--                Entry ${index + 1}-->
+<!--            </button>-->
+<!--            <div id="collapse-${index}" class="hidden mt-4">-->
+<!--                <form class="space-y-4 entry-form" id="form-${index}">-->
+<!--                    <input type="date" name="date" class="w-full p-2 border rounded" required>-->
+<!--                    <textarea name="activities" placeholder="Activities" class="w-full p-2 border rounded" required></textarea>-->
+<!--                    <textarea name="challenges" placeholder="Challenges" class="w-full p-2 border rounded" required></textarea>-->
+<!--                    <textarea name="solutions" placeholder="Solutions" class="w-full p-2 border rounded" required></textarea>-->
+<!--                </form>-->
+<!--                <div class="flex justify-end space-x-2 mt-2">-->
+<!--                    <button class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-700"-->
+<!--                        onclick="saveEntry(${index})">Save</button>-->
+<!--                    <button class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 hidden"-->
+<!--                        id="edit-btn-${index}" onclick="editEntry(${index})">Edit</button>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>`;-->
+<!--    }-->
+
+<!--    const savedEntries = {};-->
+
+<!--    function saveEntry(index) {-->
+<!--        const form = document.getElementById(`form-${index}`);-->
+<!--        const date = form.querySelector('input[name="date"]').value;-->
+<!--        const activities = form.querySelector('textarea[name="activities"]').value;-->
+<!--        const challenges = form.querySelector('textarea[name="challenges"]').value;-->
+<!--        const solutions = form.querySelector('textarea[name="solutions"]').value;-->
+
+<!--        savedEntries[index] = { date, activities, challenges, solutions };-->
+
+<!--        Array.from(form.elements).forEach((el) => el.disabled = true);-->
+<!--        document.getElementById(`edit-btn-${index}`).classList.remove('hidden');-->
+<!--    }-->
+
+<!--    function editEntry(index) {-->
+<!--        const form = document.getElementById(`form-${index}`);-->
+<!--        Array.from(form.elements).forEach((el) => el.disabled = false);-->
+
+<!--        const entry = savedEntries[index];-->
+<!--        if (entry) {-->
+<!--            form.querySelector('input[name="date"]').value = entry.date;-->
+<!--            form.querySelector('textarea[name="activities"]').value = entry.activities;-->
+<!--            form.querySelector('textarea[name="challenges"]').value = entry.challenges;-->
+<!--            form.querySelector('textarea[name="solutions"]').value = entry.solutions;-->
+<!--        }-->
+<!--    }-->
+
+<!--    function toggleCollapse(index) {-->
+<!--        const allEntries = document.querySelectorAll('[id^="collapse-"]');-->
+<!--        allEntries.forEach((entry, i) => {-->
+<!--            if (i !== index) entry.classList.add('hidden');-->
+<!--        });-->
+
+<!--        document.getElementById(`collapse-${index}`).classList.toggle('hidden');-->
+<!--    }-->
+
+<!--    addEntryBtn.addEventListener('click', () => {-->
+<!--        if (entryCount < maxEntries) {-->
+<!--            entriesContainer.insertAdjacentHTML('beforeend', createEntryTemplate(entryCount));-->
+<!--            entryCount++;-->
+
+<!--            if (entryCount >= minEntries) submitBtn.classList.remove('hidden');-->
+<!--            if (entryCount === maxEntries) addEntryBtn.disabled = true;-->
+<!--        }-->
+<!--    });-->
+
+<!--    submitBtn.addEventListener('click', () => {-->
+<!--        const allEntries = Array.from(document.querySelectorAll('.entry-form')).map((form, index) => {-->
+<!--            const date = form.querySelector('input[name="date"]').value;-->
+<!--            const activities = form.querySelector('textarea[name="activities"]').value;-->
+<!--            const challenges = form.querySelector('textarea[name="challenges"]').value;-->
+<!--            const solutions = form.querySelector('textarea[name="solutions"]').value;-->
+
+<!--            return `-->
+<!--                <div class="mb-4">-->
+<!--                    <h3 class="text-lg font-bold">Entry ${index + 1} - ${date}</h3>-->
+<!--                    <p><strong>Activities:</strong> ${activities}</p>-->
+<!--                    <p><strong>Challenges:</strong> ${challenges}</p>-->
+<!--                    <p><strong>Solutions:</strong> ${solutions}</p>-->
+<!--                </div><hr class="my-2">`;-->
+<!--        });-->
+
+<!--        compiledContent.innerHTML = allEntries.join('');-->
+<!--        compiledEntries.classList.remove('hidden');-->
+<!--    });-->
+
+<!--printBtn.addEventListener('click', () => {-->
+<!--    const doc = new jsPDF();-->
+<!--    let y = 10; // Initial Y position on the PDF-->
+
+<!--    // Add title to the PDF-->
+<!--    doc.setFontSize(18);-->
+<!--    doc.text('Weekly Logbook Report', 10, y);-->
+<!--    y += 15; // Move to the next line-->
+
+<!--    // Loop through each entry and add to the PDF-->
+<!--    Array.from(document.querySelectorAll('.entry-form')).forEach((form, index) => {-->
+<!--        const date = form.querySelector('input[name="date"]').value;-->
+<!--        const activities = form.querySelector('textarea[name="activities"]').value;-->
+<!--        const challenges = form.querySelector('textarea[name="challenges"]').value;-->
+<!--        const solutions = form.querySelector('textarea[name="solutions"]').value;-->
+
+<!--        // Add entry details to PDF-->
+<!--        doc.setFontSize(14);-->
+<!--        doc.text(`Entry ${index + 1} - ${date}`, 10, y);-->
+<!--        y += 10;-->
+
+<!--        doc.setFontSize(12);-->
+
+<!--        // Wrap long text to fit within the page width-->
+<!--        const pageWidth = 180; // A4 page width minus margins-->
+<!--        const activitiesText = doc.splitTextToSize(`Activities: ${activities}`, pageWidth);-->
+<!--        const challengesText = doc.splitTextToSize(`Challenges: ${challenges}`, pageWidth);-->
+<!--        const solutionsText = doc.splitTextToSize(`Solutions: ${solutions}`, pageWidth);-->
+
+<!--        // Add the wrapped text to the PDF-->
+<!--        doc.text(activitiesText, 10, y);-->
+<!--        y += activitiesText.length * 6; // Adjust Y position based on text height-->
+
+<!--        doc.text(challengesText, 10, y);-->
+<!--        y += challengesText.length * 6;-->
+
+<!--        doc.text(solutionsText, 10, y);-->
+<!--        y += solutionsText.length * 6 + 10;-->
+
+<!--        // Check if we need to add a new page-->
+<!--        if (y > 280) { // If content reaches near the end of the page-->
+<!--            doc.addPage();-->
+<!--            y = 10; // Reset Y position for new page-->
+<!--        }-->
+<!--    });-->
+
+<!--    // Save the PDF file-->
+<!--    doc.save('weekly-logbook.pdf');-->
+<!--});-->
+
+<!--</script>-->
+<!--</body>-->
+<!--</html>-->
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Logbook Entry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body class="bg-gray-100 h-screen flex items-center justify-center">
+<div class="w-3/4 bg-white p-6 rounded shadow-md">
+    <h1 class="text-2xl font-bold mb-4">Logbook Entry</h1>
+
+    <!-- Entry Forms Container -->
+    <div id="entry-forms-container"></div>
+
+    <!-- Add Entry Button -->
+    <button id="add-entry" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+        Add Daily Entry
+    </button>
+
+    <!-- Submit Weekly Report Button -->
+    <button id="submit-logbook" class="mt-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600" disabled>
+        Submit Weekly Report
+    </button>
+</div>
+
+<script>
+    const container = document.getElementById('entry-forms-container');
+    const addEntryButton = document.getElementById('add-entry');
+    const submitButton = document.getElementById('submit-logbook');
+    const MAX_ENTRIES = 6;
+    const MIN_ENTRIES = 3;
+
+    // Load saved entries from localStorage on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        const weekIndex = localStorage.getItem('currentReportIndex'); // Get current week index
+        const weeklyReports = JSON.parse(localStorage.getItem('weeklyReports')) || [];
+        const savedEntries = weeklyReports[weekIndex]?.entries || []; // Get entries for the current week
+
+        savedEntries.forEach(entry => addEntryForm(entry));
+        // If no entries, start with one entry form
+        if (savedEntries.length === 0) {
+            addEntryForm();
+        }
+    });
+
+    // Add a new daily entry form
+    addEntryButton.addEventListener('click', () => {
+        if (container.children.length < MAX_ENTRIES) {
+            addEntryForm();
+        } else {
+            alert(`You can only add a maximum of ${MAX_ENTRIES} entries.`);
+        }
+    });
+
+    // Function to create a new entry form
+    function addEntryForm(entry = { date: '', activities: '', challenges: '', solutions: '' }) {
+        const entryForm = document.createElement('div');
+        entryForm.classList.add('border', 'p-4', 'rounded', 'mb-4', 'bg-gray-50');
+
+        entryForm.innerHTML = `
+            <div class="flex justify-between items-center cursor-pointer" onclick="toggleCollapse(this)">
+                <h2 class="text-lg font-bold">Daily Entry</h2>
+                <span class="text-gray-500">+</span>
+            </div>
+            <div class="collapse-content hidden">
+                <label class="block mt-2 font-semibold">Date</label>
+                <input type="date" class="w-full px-3 py-2 border rounded mb-4" value="${entry.date}" required>
+
+                <label class="block font-semibold">Activities</label>
+                <textarea rows="3" class="w-full px-3 py-2 border rounded mb-4" required>${entry.activities}</textarea>
+
+                <label class="block font-semibold">Challenges</label>
+                <textarea rows="3" class="w-full px-3 py-2 border rounded mb-4" required>${entry.challenges}</textarea>
+
+                <label class="block font-semibold">Solutions</label>
+                <textarea rows="3" class="w-full px-3 py-2 border rounded mb-4" required>${entry.solutions}</textarea>
+
+                <button class="mt-2 px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600" onclick="saveEntry(this)">Save Entry</button>
+                <button class="mt-2 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600" onclick="deleteEntry(this)">Delete Entry</button>
+                <button class="mt-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600" onclick="editEntry(this)">Edit Entry</button>
+            </div>
+        `;
+
+        container.appendChild(entryForm);
+        toggleSubmitButton();
+    }
+
+    // Function to toggle the visibility of the entry form
+    function toggleCollapse(button) {
+        const content = button.nextElementSibling;
+        const isVisible = content.classList.toggle('hidden');
+        button.querySelector('span').textContent = isVisible ? '+' : '-';
+    }
+
+    // Function to save an entry
+    function saveEntry(button) {
+        const form = button.parentElement;
+        const entry = {
+            date: form.querySelector('input[type="date"]').value,
+            activities: form.querySelector('textarea:nth-of-type(1)').value,
+            challenges: form.querySelector('textarea:nth-of-type(2)').value,
+            solutions: form.querySelector('textarea:nth-of-type(3)').value,
+        };
+
+        // Save to localStorage for the current week
+        const weekIndex = localStorage.getItem('currentReportIndex');
+        const weeklyReports = JSON.parse(localStorage.getItem('weeklyReports')) || [];
+
+        // Ensure the current week's entries array exists
+        if (!weeklyReports[weekIndex]) {
+            weeklyReports[weekIndex] = { entries: [] };
+        }
+
+        // Update entries for the current week
+        weeklyReports[weekIndex].entries = Array.from(container.children).map(entryDiv => ({
+            date: entryDiv.querySelector('input[type="date"]').value,
+            activities: entryDiv.querySelector('textarea:nth-of-type(1)').value,
+            challenges: entryDiv.querySelector('textarea:nth-of-type(2)').value,
+            solutions: entryDiv.querySelector('textarea:nth-of-type(3)').value,
+        }));
+
+        localStorage.setItem('weeklyReports', JSON.stringify(weeklyReports));
+        alert('Entry saved successfully!');
+        toggleSubmitButton(); // Enable/disable submit button based on current entries
+    }
+
+    // Function to delete an entry
+    function deleteEntry(button) {
+        button.closest('div.border').remove();
+        toggleSubmitButton();
+        // Update localStorage after deletion
+        updateLocalStorage();
+    }
+
+    // Function to edit an entry
+    function editEntry(button) {
+        const form = button.parentElement;
+        const dateInput = form.querySelector('input[type="date"]');
+        const activitiesInput = form.querySelector('textarea:nth-of-type(1)');
+        const challengesInput = form.querySelector('textarea:nth-of-type(2)');
+        const solutionsInput = form.querySelector('textarea:nth-of-type(3)');
+
+        // Enable editing
+        dateInput.disabled = false;
+        activitiesInput.disabled = false;
+        challengesInput.disabled = false;
+        solutionsInput.disabled = false;
+
+        // Change save button to 'Update' when in edit mode
+        button.textContent = button.textContent === 'Edit Entry' ? 'Update Entry' : 'Edit Entry';
+        button.onclick = () => {
+            if (button.textContent === 'Update Entry') {
+                saveEntry(button);
+                dateInput.disabled = true;
+                activitiesInput.disabled = true;
+                challengesInput.disabled = true;
+                solutionsInput.disabled = true;
+            } else {
+                editEntry(button);
+            }
+        };
+    }
+
+    // Function to toggle submit button
+    function toggleSubmitButton() {
+        submitButton.disabled = container.children.length < MIN_ENTRIES;
+    }
+
+    // Update localStorage after any change
+    function updateLocalStorage() {
+        const allEntries = Array.from(container.children).map(entryDiv => ({
+            date: entryDiv.querySelector('input[type="date"]').value,
+            activities: entryDiv.querySelector('textarea:nth-of-type(1)').value,
+            challenges: entryDiv.querySelector('textarea:nth-of-type(2)').value,
+            solutions: entryDiv.querySelector('textarea:nth-of-type(3)').value,
+        }));
+
+        localStorage.setItem('weeklyReport', JSON.stringify(allEntries));
+    }
+
+    // Handle submission of weekly report
+    submitButton.addEventListener('click', () => {
+        const entries = Array.from(container.children).map(form => ({
+            date: form.querySelector('input[type="date"]').value,
+            activities: form.querySelector('textarea:nth-of-type(1)').value,
+            challenges: form.querySelector('textarea:nth-of-type(2)').value,
+            solutions: form.querySelector('textarea:nth-of-type(3)').value,
+        }));
+
+        // Save entries in localStorage
+        const weekIndex = localStorage.getItem('currentReportIndex');
+        const weeklyReports = JSON.parse(localStorage.getItem('weeklyReports')) || [];
+
+        if (weeklyReports[weekIndex]) {
+            weeklyReports[weekIndex].entries = entries;  // Store entries for the respective week
+            localStorage.setItem('weeklyReports', JSON.stringify(weeklyReports));
+        }
+
+        alert('Weekly Report Submitted! Redirecting to Dashboard...');
+        window.location.href = '/student-dashboard.html';
+    });
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <title>Logbook Entry</title>-->
+<!--    <script src="https://cdn.tailwindcss.com"></script>-->
+<!--</head>-->
+<!--<body class="bg-gray-100 h-screen flex items-center justify-center">-->
+<!--<div class="w-3/4 bg-white p-6 rounded shadow-md">-->
+<!--    <h1 class="text-2xl font-bold mb-4">Logbook Entry</h1>-->
+
+<!--    &lt;!&ndash; Days List (Pre-listed Days 1 to 6) &ndash;&gt;-->
+<!--    <div id="entry-forms-container" class="space-y-4">-->
+<!--        &lt;!&ndash; Dynamically Generated Forms &ndash;&gt;-->
+<!--    </div>-->
+
+<!--    <button id="submit-logbook"-->
+<!--            class="mt-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 hidden">-->
+<!--        Submit Weekly Report-->
+<!--    </button>-->
+<!--</div>-->
+
+<!--<script>-->
+<!--        const container = document.getElementById('entry-forms-container');-->
+<!--        const submitButton = document.getElementById('submit-logbook');-->
+
+<!--        let entries = JSON.parse(localStorage.getItem('weeklyReport')) || Array(6).fill({}); // Pre-fill for 6 days-->
+
+<!--        // On Page Load, Generate Forms for Days 1 to 6-->
+<!--        document.addEventListener('DOMContentLoaded', () => {-->
+<!--            for (let i = 0; i < 6; i++) {-->
+<!--                createEntryForm(entries[i], i);-->
+<!--            }-->
+<!--            toggleSubmitButton(); // Check if submit button should be shown-->
+<!--        });-->
+
+<!--        // Function to Create a Collapsible Form for Each Day-->
+<!--        function createEntryForm(data, index) {-->
+<!--            const entryForm = document.createElement('div');-->
+<!--            entryForm.classList.add('border', 'p-4', 'rounded', 'bg-gray-50');-->
+<!--            entryForm.dataset.index = index;-->
+
+<!--            entryForm.innerHTML = `-->
+<!--                <div class="flex justify-between items-center cursor-pointer"-->
+<!--                     onclick="this.nextElementSibling.classList.toggle('hidden')">-->
+<!--                    <h2 class="text-lg font-bold">Day ${index + 1}</h2>-->
+<!--                    <span>▼</span>-->
+<!--                </div>-->
+
+<!--                <div class="mt-2 ${data?.date ? '' : 'hidden'}">-->
+<!--                    <label class="block mb-2 font-semibold">Date</label>-->
+<!--                    <input type="date" class="w-full px-3 py-2 border rounded mb-4"-->
+<!--                           value="${data?.date || ''}" required>-->
+
+<!--                    <label class="block mb-2 font-semibold">Activities</label>-->
+<!--                    <textarea rows="2" class="w-full px-3 py-2 border rounded mb-4"-->
+<!--                              required>${data?.activities || ''}</textarea>-->
+
+<!--                    <label class="block mb-2 font-semibold">Challenges</label>-->
+<!--                    <textarea rows="3" class="w-full px-3 py-2 border rounded mb-4"-->
+<!--                              required>${data?.challenges || ''}</textarea>-->
+
+<!--                    <label class="block mb-2 font-semibold">Solutions</label>-->
+<!--                    <textarea rows="3" class="w-full px-3 py-2 border rounded mb-4"-->
+<!--                              required>${data?.solutions || ''}</textarea>-->
+
+<!--                    <button class="mt-2 px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"-->
+<!--                            onclick="saveEntry(${index}, this.parentElement)">-->
+<!--                        Save-->
+<!--                    </button>-->
+<!--                </div>-->
+<!--            `;-->
+<!--            container.appendChild(entryForm);-->
+<!--        }-->
+
+<!--        // Save an Entry and Update localStorage-->
+<!--        function saveEntry(index, form) {-->
+<!--            const entry = {-->
+<!--                date: form.querySelector('input[type="date"]').value,-->
+<!--                activities: form.querySelector('textarea:nth-of-type(1)').value,-->
+<!--                challenges: form.querySelector('textarea:nth-of-type(2)').value,-->
+<!--                solutions: form.querySelector('textarea:nth-of-type(3)').value,-->
+<!--            };-->
+
+<!--            entries[index] = entry; // Update the specific day's entry-->
+<!--            localStorage.setItem('weeklyReport', JSON.stringify(entries)); // Save to localStorage-->
+
+<!--            alert('Entry saved!');-->
+<!--            toggleSubmitButton(); // Check if submit button should be shown-->
+<!--        }-->
+
+<!--        // Check if Submit Button Should Be Visible-->
+<!--        function toggleSubmitButton() {-->
+<!--            const filledEntries = entries.filter(entry => entry.date && entry.activities).length;-->
+<!--            submitButton.classList.toggle('hidden', filledEntries < 3); // Show if 3+ days are filled-->
+<!--        }-->
+
+<!--        // Handle Weekly Report Submission-->
+<!--        submitButton.addEventListener('click', () => {-->
+<!--            if (entries.filter(entry => entry.date && entry.activities).length < 3) {-->
+<!--                alert('You need at least 3 days filled to submit!');-->
+<!--                return;-->
+<!--            }-->
+
+<!--            localStorage.setItem('weeklyReport', JSON.stringify(entries)); // Final save to localStorage-->
+<!--            alert('Weekly Report Submitted! Redirecting to Dashboard...');-->
+<!--            window.location.href = '/student-dashboard.html'; // Redirect to Dashboard-->
+<!--        });-->
+<!--    </script>-->
+<!--</body>-->
+<!--</html>-->
+

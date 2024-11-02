@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <html xmlns:th="http://www.thymeleaf.org">
+</head>
+<body class="bg-gray-100 py-8">
+<div class="container mx-auto max-w-lg p-6 bg-white shadow-md rounded">
+    <h1 class="text-2xl font-bold mb-4 text-center">Student Registration</h1>
+    <form   class="space-y-4" th:action="@{/student/register}"  th:object="${registerRequest}" method="post">
+        <input type="text" name="matricNumber" placeholder="Matric Number" class="w-full p-2 border rounded" required>
+        <input type="text" name="firstName" placeholder="First Name" class="w-full p-2 border rounded" required>
+        <input type="text" name="middleName" placeholder="Middle Name" class="w-full p-2 border rounded">
+        <input type="text" name="lastName" placeholder="Last Name" class="w-full p-2 border rounded" required>
+        <input type="text" name="phoneNumber" placeholder="Phone Number" class="w-full p-2 border rounded" required>
+        <input type="email" name="email" placeholder="Email" class="w-full p-2 border rounded" required>
+        <input type="text" name="residentialAddress" placeholder="Residential Address" class="w-full p-2 border rounded" required>
+        <input type="password" name="password" placeholder="Preferred Password" class="w-full p-2 border rounded" required>
+        <input type="text" name="faculty" placeholder="Faculty" class="w-full p-2 border rounded" required>
+        <input type="text" name="department" placeholder="Department" class="w-full p-2 border rounded" required>
+        <input type="text" name="companyName" placeholder="Company's Name" class="w-full p-2 border rounded" required>
+        <input type="text" name="companyLocation" placeholder="Company's Location" class="w-full p-2 border rounded" required>
+        <input type="text" name="companyCustomerCare" placeholder="Company's Customer Care Line" class="w-full p-2 border rounded" required>
+        <input type="text" name="supervisorId" placeholder="Supervisor's Id" class="w-full p-2 border rounded" required>
+        <input type="text" name="supervisorName" placeholder="Supervisor's Name" class="w-full p-2 border rounded" required>
+        <input type="text" name="supervisorPhone" placeholder="Supervisor's Phone Number" class="w-full p-2 border rounded" required>
+        <button type="submit" class="w-full bg-blue-500 hover:bg-blue-700 text-white py-2 rounded">Register</button>
+    </form>
+    <div class="text-center mt-4">
+        <a href="/student/login" class="text-blue-500 hover:underline">Already registered? Login here</a>
+    </div>
+</div>
+</body>
+</html>

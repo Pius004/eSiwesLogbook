@@ -1,0 +1,344 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+</head>
+<body class="bg-gray-900 text-white h-screen flex">
+
+<!-- Sidebar -->
+<aside class="w-64 bg-gray-800 flex flex-col items-center py-6">
+    <img class="w-24 h-24 rounded-full border-2 border-white mb-4"
+         src="/avatar1.png" alt="Avatar">
+    <h2 class="text-lg font-semibold mb-2">
+        Hi, <span th:text="${student.firstName} + ' ' + ${student.lastName}">Student Name</span>
+    </h2>
+    <button class="mt-auto mb-4 px-4 py-2 bg-red-500 hover:bg-red-600 rounded">
+        <a href="/student/login">Logout</a>
+    </button>
+</aside>
+
+<!-- Main Content -->
+<div class="flex-1 flex flex-col">
+    <header class="bg-gray-800 py-4 px-6 flex justify-between items-center">
+        <h1 class="text-2xl font-semibold">Welcome to eSIWES Logbook</h1>
+    </header>
+
+    <div class="flex-grow flex flex-col justify-center items-center space-y-4">
+
+        <!-- Button to Start a New Weekly Report -->
+        <button id="start-report"
+                class="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white text-lg rounded shadow-md">
+            Start Weekly Report
+        </button>
+
+        <!-- Weekly Report Cards Container -->
+        <div id="weekly-report-cards" class="w-3/4 space-y-4 mt-8"></div>
+    </div>
+</div>
+
+<script>
+    const weeklyReports = JSON.parse(localStorage.getItem('weeklyReports')) || [];
+    const reportCardsContainer = document.getElementById('weekly-report-cards');
+    const startReportButton = document.getElementById('start-report');
+
+    // Render Existing Weekly Report Cards on Load
+    document.addEventListener('DOMContentLoaded', renderReportCards);
+
+    // Add New Weekly Report Card
+    startReportButton.addEventListener('click', () => {
+        const weekNumber = weeklyReports.length + 1;
+        const newReport = { week: weekNumber, submitted: false };
+        weeklyReports.push(newReport);
+        localStorage.setItem('weeklyReports', JSON.stringify(weeklyReports));
+        renderReportCards();
+    });
+
+    // Render Report Cards
+    function renderReportCards() {
+        reportCardsContainer.innerHTML = ''; // Clear existing cards
+
+        weeklyReports.forEach((report, index) => {
+            const card = document.createElement('div');
+            card.className = 'bg-gray-800 p-4 rounded shadow-md flex justify-between items-center';
+
+            card.innerHTML = `
+                <div>
+                    <h2 class="text-lg font-bold">Week ${report.week}</h2>
+                    <button class="text-blue-400 underline" onclick="navigateToEntry(${index})">
+                        Open Logbook Entry
+                    </button>
+                </div>
+                <div class="flex space-x-4">
+                    <button class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded text-white"
+                            onclick="deleteReport(${index})">
+                        Delete
+                    </button>
+                    <button class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded text-white"
+                            ${report.submitted ? '' : 'disabled'}>
+                        Print PDF
+                    </button>
+                </div>
+            `;
+
+            reportCardsContainer.appendChild(card);
+        });
+    }
+
+    // Navigate to Logbook Entry Page
+    function navigateToEntry(index) {
+        localStorage.setItem('currentReportIndex', index);
+        window.location.href = '/logbook-entry.html';
+    }
+
+    // Delete a Weekly Report
+    function deleteReport(index) {
+        weeklyReports.splice(index, 1);
+        localStorage.setItem('weeklyReports', JSON.stringify(weeklyReports));
+        renderReportCards();
+    }
+
+
+// Render Report Cards
+function renderReportCards() {
+    reportCardsContainer.innerHTML = ''; // Clear existing cards
+
+    weeklyReports.forEach((report, index) => {
+        const card = document.createElement('div');
+        card.className = 'bg-gray-800 p-4 rounded shadow-md flex justify-between items-center';
+
+        card.innerHTML = `
+            <div>
+                <h2 class="text-lg font-bold">Week ${report.week}</h2>
+                <button class="text-blue-400 underline" onclick="navigateToEntry(${index})">
+                    Open Logbook Entry
+                </button>
+            </div>
+            <div class="flex space-x-4">
+                <button class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded text-white"
+                        onclick="deleteReport(${index})">
+                    Delete
+                </button>
+                <button class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded text-white"
+                        onclick="generatePDF(${index})" ${report.entries ? '' : 'disabled'}>
+                    Print PDF
+                </button>
+            </div>
+        `;
+
+        reportCardsContainer.appendChild(card);
+    });
+}
+
+ function generatePDF(index) {
+        const report = weeklyReports[index];
+
+        if (report.entries && report.entries.length > 0) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const margin = 10;
+            const lineHeight = 6;
+            let y = margin;
+
+            // Add title
+            doc.setFontSize(20);
+            doc.text(`Weekly Report - Week ${report.week}`, margin, y);
+            y += lineHeight * 2;
+
+            // Add entries
+            doc.setFontSize(12);
+            report.entries.forEach(entry => {
+                doc.text(`Date: ${entry.date}`, margin, y);
+                y += lineHeight;
+                const activities = `Activities: ${entry.activities || 'No activities recorded'}`;
+                const challenges = `Challenges: ${entry.challenges}`;
+                const solutions = `Solutions: ${entry.solutions}`;
+
+                // Split long texts into multiple lines
+                const activitiesLines = doc.splitTextToSize(activities, 190 - 2 * margin);
+                const challengesLines = doc.splitTextToSize(challenges, 190 - 2 * margin);
+                const solutionsLines = doc.splitTextToSize(solutions, 190 - 2 * margin);
+
+
+                doc.text(activitiesLines, margin, y); // Add activities
+                y += activitiesLines.length * lineHeight + lineHeight;
+
+                doc.text(challengesLines, margin, y);
+                y += challengesLines.length * lineHeight;
+
+                doc.text(solutionsLines, margin, y);
+                y += solutionsLines.length * lineHeight + lineHeight; // Extra space between entries
+
+                // Check if we need to add a new page
+                if (y > 280) { // Adjust 280 based on your desired page length
+                    doc.addPage();
+                    y = margin; // Reset y position for new page
+                }
+            });
+
+            // Save the PDF
+            doc.save(`Weekly_Report_Week_${report.week}.pdf`);
+        } else {
+            alert("No entries available to generate PDF.");
+        }
+    }
+
+</script>
+</body>
+</html>
+
+<!--<!DOCTYPE html>-->
+<!--<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <title>Student Dashboard</title>-->
+<!--    <script src="https://cdn.tailwindcss.com"></script>-->
+<!--</head>-->
+<!--<body class="bg-gray-900 text-white h-screen flex">-->
+<!--&lt;!&ndash; Sidebar &ndash;&gt;-->
+<!--<aside class="w-64 bg-gray-800 flex flex-col items-center py-6">-->
+<!--    <img class="w-24 h-24 rounded-full border-2 border-white mb-4"-->
+<!--         src="https://via.placeholder.com/100" alt="Avatar">-->
+<!--    <h2 class="text-lg font-semibold mb-2">-->
+<!--        Welcome, <span th:text="${student.firstName} + ' ' + ${student.lastName}">Student Name</span>-->
+<!--    </h2>-->
+<!--    <button class="mt-auto mb-4 px-4 py-2 bg-red-500 hover:bg-red-600 rounded">-->
+<!--        <a href="/student/login">Logout</a>-->
+<!--    </button>-->
+<!--</aside>-->
+
+<!--&lt;!&ndash; Main Content &ndash;&gt;-->
+<!--<div class="flex-1 flex flex-col">-->
+<!--    <header class="bg-gray-800 py-4 px-6 flex justify-between items-center">-->
+<!--        <h1 class="text-2xl font-semibold">Welcome to eSIWES Logbook</h1>-->
+<!--    </header>-->
+
+<!--    <div class="flex-grow flex flex-col justify-center items-center">-->
+
+<!--        &lt;!&ndash; Main Body &ndash;&gt;-->
+<!--        <div class="flex-grow flex flex-col justify-center items-center">-->
+
+<!--            &lt;!&ndash; Inline Table for Weekly Report &ndash;&gt;-->
+<!--            <div id="weekly-report" class="mt-8 hidden">-->
+<!--                <h2 class="text-xl font-bold mb-4">Weekly Report</h2>-->
+<!--                <table class="min-w-full bg-white border rounded shadow-md">-->
+<!--                    <thead>-->
+<!--                    <tr class="border-b">-->
+<!--                        <th class="px-4 py-2">Date</th>-->
+<!--                        <th class="px-4 py-2">Challenges</th>-->
+<!--                        <th class="px-4 py-2">Solutions</th>-->
+<!--                    </tr>-->
+<!--                    </thead>-->
+<!--                    <tbody id="report-entries"></tbody>-->
+<!--                </table>-->
+<!--                <button id="print-report" class="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">-->
+<!--                    Print Report-->
+<!--                </button>-->
+<!--            </div>-->
+<!--        </div>-->
+
+<!--        <button id="start-report"-->
+<!--                class="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white text-lg rounded shadow-md" >-->
+<!--            <a href="/logbook-entry.html">Start Weekly Report</a>-->
+<!--        </button>-->
+<!--    </div>-->
+<!--</div>-->
+<!--</body>-->
+<!--</html>-->
+
+
+
+<!--<!DOCTYPE html>-->
+<!--<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <title>Student Dashboard</title>-->
+<!--    <script src="https://cdn.tailwindcss.com"></script>-->
+<!--</head>-->
+<!--<body class="bg-gray-900 text-white h-screen flex">-->
+<!--&lt;!&ndash; Sidebar &ndash;&gt;-->
+<!--<aside class="w-64 bg-gray-800 flex flex-col items-center py-6">-->
+<!--    <img class="w-24 h-24 rounded-full border-2 border-white mb-4"-->
+<!--         src="https://via.placeholder.com/100" alt="Avatar">-->
+<!--    <h2 class="text-lg font-semibold mb-2">-->
+<!--        Welcome, <span th:text="${student.firstName} + ' ' + ${student.lastName}">Student Name</span>-->
+<!--    </h2>-->
+<!--    <button class="mt-auto mb-4 px-4 py-2 bg-red-500 hover:bg-red-600 rounded">-->
+<!--        <a href="/student/login">Logout</a>-->
+<!--    </button>-->
+<!--</aside>-->
+
+<!--&lt;!&ndash; Main Content &ndash;&gt;-->
+<!--<div class="flex-1 flex flex-col">-->
+<!--    <header class="bg-gray-800 py-4 px-6 flex justify-between items-center">-->
+<!--        <h1 class="text-2xl font-semibold">Welcome to eSIWES Logbook</h1>-->
+<!--    </header>-->
+
+<!--    <div class="flex-grow flex flex-col justify-center items-center">-->
+<!--        &lt;!&ndash; Inline Table for Weekly Report &ndash;&gt;-->
+<!--        <div id="weekly-report" class="mt-8 hidden">-->
+<!--            <h2 class="text-xl font-bold mb-4">Weekly Report</h2>-->
+<!--            <table class="min-w-full bg-white text-black border rounded shadow-md">-->
+<!--                <thead>-->
+<!--                <tr class="border-b">-->
+<!--                    <th class="px-4 py-2">Date</th>-->
+<!--                    <th class="px-4 py-2">Challenges</th>-->
+<!--                    <th class="px-4 py-2">Solutions</th>-->
+<!--                </tr>-->
+<!--                </thead>-->
+<!--                <tbody id="report-entries"></tbody>-->
+<!--            </table>-->
+<!--            <button id="print-report" class="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">-->
+<!--                Print Report-->
+<!--            </button>-->
+<!--        </div>-->
+
+<!--        <button id="start-report"-->
+<!--                class="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white text-lg rounded shadow-md">-->
+<!--            <a href="/logbook-entry.html">Start Weekly Report</a>-->
+<!--        </button>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<script>-->
+<!--        // Populate the report table with saved entries from localStorage-->
+<!--        document.addEventListener('DOMContentLoaded', () => {-->
+<!--            const reportEntries = JSON.parse(localStorage.getItem('weeklyReport')) || [];-->
+<!--            const reportBody = document.getElementById('report-entries');-->
+
+<!--            // Populate the table rows-->
+<!--            reportEntries.forEach(entry => {-->
+<!--                const row = document.createElement('tr');-->
+<!--                row.innerHTML = `-->
+<!--                    <td class="border px-4 py-2">${entry.date}</td>-->
+<!--                    <td class="border px-4 py-2">${entry.challenges}</td>-->
+<!--                    <td class="border px-4 py-2">${entry.solutions}</td>-->
+<!--                `;-->
+<!--                reportBody.appendChild(row);-->
+<!--            });-->
+
+<!--            // Show the weekly report section if there are entries-->
+<!--            if (reportEntries.length > 0) {-->
+<!--                document.getElementById('weekly-report').classList.remove('hidden');-->
+<!--            }-->
+<!--        });-->
+
+<!--        // Print report functionality-->
+<!--        document.getElementById('print-report').addEventListener('click', () => {-->
+<!--            window.print();-->
+<!--        });-->
+<!--    </script>-->
+<!--</body>-->
+<!--</html>-->
+
+
+
+
+
